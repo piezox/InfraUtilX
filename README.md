@@ -24,13 +24,14 @@ This repository contains a script that automates the process of:
 - `jq` command-line JSON processor
 - An EC2 instance running VS Code Server on port 8080
 - SSH key pair for EC2 authentication
+- A running VS Code Server on AWS EC2; I used: https://github.com/coder/deploy-code-server/blob/main/guides/aws-ec2.md as a reference
 
 ## Installation
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/ec2-vscode-connector.git
-   cd ec2-vscode-connector
+   git clone https://github.com/yourusername/ec2utility_script.git
+   cd ec2utility_script
    ```
 
 2. Make the script executable:

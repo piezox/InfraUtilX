@@ -4,13 +4,13 @@
 # Created: $(date)
 
 # Configuration
-INSTANCE_ID="INSTANCE_ID"  # Fixed instance ID that won't change on reboot
-EC2_USER="EC2_USER"
-KEY_PATH="$HOME/KEY_PATH"
+INSTANCE_ID="..."  # Fixed instance ID that won't change on reboot
+EC2_USER="..."
+KEY_PATH="$HOME/.ssh/..."
 LOCAL_PORT=8080
 REMOTE_PORT=8080
-SECURITY_GROUP_ID="SECURITY_GROUP_ID"
-AWS_REGION="AWS_REGION"
+SECURITY_GROUP_ID="sg-..."
+AWS_REGION="..."
 SSH_PORT=22
 IP_CACHE_FILE="$HOME/.ec2_last_ip"
 

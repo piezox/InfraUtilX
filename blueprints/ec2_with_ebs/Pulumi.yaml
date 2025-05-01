@@ -1,0 +1,3 @@
+name: ec2-with-ebs-blueprint
+runtime: python
+description: InfraUtilX blueprint for EC2 deployment with EBS and security group configuration 

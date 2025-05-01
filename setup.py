@@ -8,6 +8,7 @@ setup(
         "pulumi>=3.0.0",
         "pulumi-aws>=6.0.0",
         "boto3>=1.26.0",
+        "requests>=2.28.0",
     ],
     python_requires=">=3.8",
     author="Stefano Marzani",  # TODO: Replace with your name
@@ -21,4 +22,11 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    extras_require={
+        "dev": [
+            "pytest>=7.0.0",
+            "pytest-mock>=3.10.0",
+            "moto>=4.1.0",
+        ],
+    },
 ) 

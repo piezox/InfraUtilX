@@ -19,13 +19,14 @@ def get_ubuntu_ami(
     Returns:
         str: AMI ID
     """
+    # Use simplified filter pattern that works across all regions
     ami = aws.ec2.get_ami(
         most_recent=True,
         owners=["099720109477"],  # Canonical
         filters=[
             {
                 "name": "name",
-                "values": [f"ubuntu/images/{virtualization_type}-{root_device_type}/ubuntu-jammy-{version}-{architecture}-server-*"]
+                "values": [f"ubuntu/images/{virtualization_type}-ssd/ubuntu-jammy-{version}-{architecture}-server-*"]
             },
             {
                 "name": "virtualization-type",
@@ -34,6 +35,10 @@ def get_ubuntu_ami(
             {
                 "name": "root-device-type",
                 "values": [root_device_type]
+            },
+            {
+                "name": "state",
+                "values": ["available"]
             }
         ]
     )
@@ -56,7 +61,7 @@ def get_amazon_linux_ami(
         str: AMI ID
     """
     owners = ["137112412989"]  # Amazon
-    name_filter = f"amzn2-ami-*-{architecture}-gp2" if version == 2 else f"amzn-ami-*-{architecture}-gp2"
+    name_filter = f"amzn2-ami-hvm-*-{architecture}-gp2" if version == 2 else f"amzn-ami-hvm-*-{architecture}-gp2"
     
     ami = aws.ec2.get_ami(
         most_recent=True,
@@ -69,6 +74,10 @@ def get_amazon_linux_ami(
             {
                 "name": "virtualization-type",
                 "values": [virtualization_type]
+            },
+            {
+                "name": "state",
+                "values": ["available"]
             }
         ]
     )

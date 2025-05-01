@@ -17,7 +17,7 @@ def get_default_tags(project: str, environment: str = "dev") -> Dict[str, str]:
         "ManagedBy": "InfraUtilX",
     }
 
-def merge_tags(default_tags: Dict[str, str], custom_tags: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+def merge_tags(default_tags: Optional[Dict[str, str]] = None, custom_tags: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     """
     Merge default tags with custom tags.
     
@@ -28,7 +28,14 @@ def merge_tags(default_tags: Dict[str, str], custom_tags: Optional[Dict[str, str
     Returns:
         Dict[str, str]: Merged tags dictionary
     """
-    if custom_tags is None:
-        return default_tags
+    result = {}
     
-    return {**default_tags, **custom_tags} 
+    # Add default tags if provided
+    if default_tags:
+        result.update(default_tags)
+    
+    # Add custom tags if provided
+    if custom_tags:
+        result.update(custom_tags)
+    
+    return result 

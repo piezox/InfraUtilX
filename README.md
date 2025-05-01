@@ -11,52 +11,54 @@ InfraUtilX provides a collection of reusable components and utilities for AWS in
 - **EC2 Management**: Reusable components for EC2 instances, security groups, and key pairs
 - **Storage Solutions**: EBS volumes and S3 bucket management
 - **Networking**: VPC components and security utilities
-- **Utilities**: Common utilities for tagging, AMI lookup, and more
+- **Utilities**: Common utilities for tagging, AMI lookup, IP address handling, and more
+- **Blueprints**: Ready-to-use architectural patterns for common deployment scenarios
 
 ## Installation
 
-1. Clone the repository:
+### Basic Installation
+
+For basic usage, clone the repository and install the package:
+
 ```bash
 git clone https://github.com/piezox/InfraUtilX.git
 cd InfraUtilX
-```
-
-2. Create and activate a virtual environment:
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install the package in development mode:
-```bash
 pip install -e .
+```
+
+### Development Installation
+
+If you're developing or contributing to InfraUtilX, install with development dependencies:
+
+```bash
+# Install the package with development dependencies
+pip install -e ".[dev]"
+
+# Alternatively, use the requirements files
+pip install -r requirements.txt
+pip install -r requirements-test.txt
 ```
 
 ## Running Tests
 
-1. Install test dependencies:
-```bash
-pip install -r requirements-test.txt
-```
+Run tests with pytest:
 
-2. Run all tests:
 ```bash
+# Run all tests
 pytest tests/
-```
 
-3. Run tests for a specific module:
-```bash
-pytest tests/ec2/  # For EC2 tests
-pytest tests/storage/  # For storage tests
-pytest tests/utils/  # For utility tests
-```
+# Run tests for a specific module
+pytest tests/ec2/     # For EC2 tests
+pytest tests/storage/ # For storage tests
+pytest tests/utils/   # For utility tests
 
-4. Run tests with coverage report:
-```bash
+# Run tests with coverage report
 pytest --cov=infrastructure tests/
 ```
 
 ## Usage
+
+### Basic Component Usage
 
 ```python
 from infrastructure.ec2.instances import create_instance
@@ -74,6 +76,29 @@ instance = create_instance(
 )
 ```
 
+### Blueprints
+
+We provide several deployment blueprints that show how to use the InfraUtilX components together to build complete infrastructure patterns:
+
+#### EC2 with EBS Blueprint
+
+This blueprint provides a production-ready pattern for:
+- Launching an EC2 instance with all supporting infrastructure
+- Attaching an EBS volume for additional storage
+- Configuring security groups using your local machine's IP address
+
+To use this blueprint:
+
+```bash
+# Navigate to the blueprint directory
+cd blueprints/ec2_with_ebs
+
+# Create a key and deploy
+./deploy.sh --create-key
+```
+
+See the [blueprints directory](./blueprints/) for more detailed information.
+
 ## Project Structure
 
 ```
@@ -81,17 +106,20 @@ InfraUtilX/
 ├── infrastructure/          # Main package code
 │   ├── ec2/               # EC2 instance components
 │   ├── networking/        # Networking components
-│   ├── storage/          # Storage components
-│   └── utils/            # Utility functions
-├── tests/                 # Test files
-│   ├── ec2/              # EC2 tests
-│   ├── networking/       # Networking tests
-│   ├── storage/         # Storage tests
-│   └── utils/           # Utility tests
-├── OldScriptX.zip        # Legacy scripts (archived)
-├── setup.py             # Package configuration
-├── requirements-test.txt # Test dependencies
-└── README.md            # Project documentation
+│   ├── storage/           # Storage components
+│   └── utils/             # Utility functions
+├── blueprints/             # Deployment blueprints
+│   └── ec2_with_ebs/      # EC2 with EBS blueprint
+├── tests/                  # Test files
+│   ├── ec2/               # EC2 tests
+│   ├── networking/        # Networking tests
+│   ├── storage/           # Storage tests
+│   └── utils/             # Utility tests
+├── OldScriptX.zip          # Legacy scripts (archived)
+├── setup.py                # Package configuration
+├── requirements.txt        # Runtime dependencies
+├── requirements-test.txt   # Test dependencies (extends requirements.txt)
+└── README.md               # Project documentation
 ```
 
 ## Contributing

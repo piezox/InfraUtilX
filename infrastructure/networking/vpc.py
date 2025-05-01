@@ -8,7 +8,7 @@ def create_vpc(
     enable_dns_hostnames: bool = True,
     enable_dns_support: bool = True,
     tags: Optional[Dict[str, str]] = None,
-) -> aws.ec2.Vpc:
+) -> tuple[aws.ec2.Vpc, aws.ec2.RouteTable]:
     """
     Create a VPC with the specified configuration.
     
@@ -20,7 +20,7 @@ def create_vpc(
         tags: Optional dictionary of tags
     
     Returns:
-        aws.ec2.Vpc: The created VPC
+        tuple[aws.ec2.Vpc, aws.ec2.RouteTable]: The created VPC and public route table
     """
     vpc = aws.ec2.Vpc(
         name,
@@ -50,7 +50,7 @@ def create_vpc(
         tags=tags,
     )
 
-    return vpc
+    return vpc, public_rt
 
 def create_subnet(
     name: str,
@@ -59,6 +59,7 @@ def create_subnet(
     availability_zone: str,
     map_public_ip_on_launch: bool = True,
     tags: Optional[Dict[str, str]] = None,
+    public_route_table_id: Optional[str] = None,
 ) -> aws.ec2.Subnet:
     """
     Create a subnet in the specified VPC.
@@ -70,6 +71,7 @@ def create_subnet(
         availability_zone: Availability zone for the subnet
         map_public_ip_on_launch: Whether to map public IP on launch
         tags: Optional dictionary of tags
+        public_route_table_id: Optional ID of the public route table to associate the subnet with
     
     Returns:
         aws.ec2.Subnet: The created subnet
@@ -82,6 +84,14 @@ def create_subnet(
         map_public_ip_on_launch=map_public_ip_on_launch,
         tags=tags,
     )
+    
+    # Associate the subnet with the public route table if provided
+    if public_route_table_id:
+        aws.ec2.RouteTableAssociation(
+            f"{name}-rt-association",
+            subnet_id=subnet.id,
+            route_table_id=public_route_table_id,
+        )
 
     return subnet
 

@@ -83,9 +83,11 @@ We provide several deployment blueprints that show how to use the InfraUtilX com
 #### EC2 with EBS Blueprint
 
 This blueprint provides a production-ready pattern for:
-- Launching an EC2 instance with all supporting infrastructure
-- Attaching an EBS volume for additional storage
+- Launching an EC2 instance with all supporting infrastructure (VPC, subnet, internet gateway, route tables)
+- Proper subnet routing configuration for public internet access
+- Attaching and automatically initializing an EBS volume for additional storage
 - Configuring security groups using your local machine's IP address
+- Automated key pair management in the correct region
 
 To use this blueprint:
 
@@ -93,9 +95,17 @@ To use this blueprint:
 # Navigate to the blueprint directory
 cd blueprints/ec2_with_ebs
 
-# Create a key and deploy
-./deploy.sh --create-key
+# Deploy with a specific region (optional, defaults to us-west-2)
+./deploy.sh --region us-east-1
 ```
+
+Features of the EC2 with EBS blueprint:
+- Automatically creates a VPC with proper internet gateway and route table configuration
+- Associates the subnet with the route table to ensure instances have internet access
+- Detects your local IP address and configures security group rules to allow SSH access only from your location
+- Automatically formats and mounts the EBS volume on instance startup
+- Configures the EBS volume to persist across instance reboots via /etc/fstab
+- Properly manages key pairs in the selected AWS region
 
 See the [blueprints directory](./blueprints/) for more detailed information.
 

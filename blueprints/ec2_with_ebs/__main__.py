@@ -43,7 +43,7 @@ key_name, key_path = ensure_keypair(
 
 # Create a VPC with necessary networking components
 # The create_vpc function already creates internet gateway and route tables
-vpc = create_vpc(
+vpc, public_route_table = create_vpc(
     name=f"{CONFIG['project']}-vpc",
     cidr_block="10.0.0.0/16",
     enable_dns_hostnames=True,
@@ -61,7 +61,8 @@ subnet = create_subnet(
     cidr_block="10.0.1.0/24",
     availability_zone=first_az,
     map_public_ip_on_launch=True,
-    tags=merge_tags(tags, {"Name": f"{CONFIG['project']}-subnet"})
+    tags=merge_tags(tags, {"Name": f"{CONFIG['project']}-subnet"}),
+    public_route_table_id=public_route_table.id
 )
 
 # Get the public IP of the local machine for secure SSH access
@@ -106,7 +107,7 @@ security_group = create_security_group(
 )
 
 # Create an EC2 instance
-ami_id = get_ubuntu_ami()
+ami_id = "ami-0f9de6e2d2f067fca"  # Specific AMI instead of dynamic lookup
 instance = create_instance(
     name=f"{CONFIG['project']}-instance",
     instance_type=CONFIG["instance_type"],
@@ -116,10 +117,53 @@ instance = create_instance(
     subnet_id=subnet.id,
     tags=merge_tags(tags, {"Name": f"{CONFIG['project']}-instance"}),
     ami_id=ami_id,
-    user_data="""#!/bin/bash
+    user_data=f"""#!/bin/bash
 echo "Hello from InfraUtilX Example!"
+
+# Update packages
 sudo apt-get update -y
 sudo apt-get install -y nginx
+sudo systemctl start nginx
+
+# Wait for devices to settle
+sleep 10
+
+# Get the EBS device name (in case of device name mapping differences)
+DEVICE_NAME="{CONFIG['ebs_device_name']}"
+ACTUAL_DEVICE=$(lsblk | grep -v loop | grep disk | grep -v xvda | awk '{{print $1}}' | head -1)
+if [ -z "$ACTUAL_DEVICE" ]; then
+    echo "Could not find the EBS volume. Using default: $DEVICE_NAME"
+    ACTUAL_DEVICE="xvdf"
+else
+    echo "Detected EBS volume as /dev/$ACTUAL_DEVICE"
+fi
+ACTUAL_DEVICE="/dev/$ACTUAL_DEVICE"
+
+# Create mount point
+MOUNT_POINT="/data"
+sudo mkdir -p $MOUNT_POINT
+
+# Always format the volume - we know it's a new volume as part of our deployment
+echo "Formatting the EBS volume as ext4..."
+sudo mkfs -t ext4 $ACTUAL_DEVICE
+
+# Mount the volume
+echo "Mounting the EBS volume to $MOUNT_POINT"
+sudo mount $ACTUAL_DEVICE $MOUNT_POINT
+
+# Update fstab to mount on reboot
+EBS_UUID=$(sudo blkid -s UUID -o value $ACTUAL_DEVICE)
+if ! grep -q "$EBS_UUID" /etc/fstab; then
+    echo "Adding entry to /etc/fstab for persistent mounting"
+    echo "UUID=$EBS_UUID $MOUNT_POINT ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+fi
+
+# Set proper permissions
+sudo chown -R ubuntu:ubuntu $MOUNT_POINT
+
+# Create a file to verify setup completed
+sudo touch /tmp/startup_complete
+echo "EBS volume setup completed successfully" > $MOUNT_POINT/setup_complete.txt
 """
 )
 

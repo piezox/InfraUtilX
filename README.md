@@ -17,7 +17,7 @@ InfraUtilX provides a collection of reusable components and utilities for AWS in
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/InfraUtilX.git  # TODO: Replace with your actual repository URL
+git clone https://github.com/piezox/InfraUtilX.git
 cd InfraUtilX
 ```
 
@@ -88,8 +88,7 @@ InfraUtilX/
 │   ├── networking/       # Networking tests
 │   ├── storage/         # Storage tests
 │   └── utils/           # Utility tests
-├── OldScriptX/           # Legacy scripts
-├── scripts/              # Shell script utilities
+├── OldScriptX.zip        # Legacy scripts (archived)
 ├── setup.py             # Package configuration
 ├── requirements-test.txt # Test dependencies
 └── README.md            # Project documentation

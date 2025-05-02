@@ -1,24 +1,31 @@
-import pulumi
+"""
+Shared test fixtures and configuration.
+"""
+
 import pytest
+import pulumi
+import os
+import sys
 
-class MyMocks(pulumi.runtime.Mocks):
-    def new_resource(self, type_, name, inputs, provider, id_):
-        # Return a fake resource ID and the same inputs as outputs
-        return name + '_id', inputs
+# Add the parent directory to the path so we can import the infrastructure package
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-    def call(self, call_args):
-        if call_args.token == 'aws:ec2/getAmi:getAmi':
-            # Mock the AMI lookup
-            return {
-                'id': 'ami-123456',
-                'architecture': 'x86_64',
-                'name': 'mock-ami',
-                'rootDeviceName': '/dev/xvda',
-                'rootDeviceType': 'ebs',
-                'virtualizationType': 'hvm',
-            }
-        return {}
+# Mock Pulumi engine
+class MockPulumiEngine:
+    """Mock Pulumi engine for testing."""
+    
+    def __init__(self):
+        self.outputs = {}
+    
+    def mock_output(self, name, value):
+        """Mock a Pulumi output."""
+        self.outputs[name] = pulumi.Output.from_input(value)
+        
+    def get_output(self, name):
+        """Get a mocked Pulumi output."""
+        return self.outputs.get(name)
 
-@pytest.fixture(autouse=True, scope="session")
-def pulumi_mocks():
-    pulumi.runtime.set_mocks(MyMocks()) 
+@pytest.fixture
+def mock_pulumi():
+    """Fixture to mock Pulumi engine."""
+    return MockPulumiEngine()

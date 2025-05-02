@@ -13,6 +13,7 @@ InfraUtilX provides a collection of reusable components and utilities for AWS in
 - **Networking**: VPC components and security utilities
 - **Utilities**: Common utilities for tagging, AMI lookup, IP address handling, and more
 - **Blueprints**: Ready-to-use architectural patterns for common deployment scenarios
+- **Stack Management**: Tools for managing access to deployed infrastructure when your IP changes
 
 ## Installation
 
@@ -56,6 +57,38 @@ pytest tests/utils/   # For utility tests
 pytest --cov=infrastructure tests/
 ```
 
+## Managing Access to Deployed Infrastructure
+
+InfraUtilX includes a utility for managing access to your deployed infrastructure when your IP address changes. This is particularly useful for SSH access to EC2 instances.
+
+### Prerequisites
+
+Before using the access management utilities, make sure you have:
+
+1. **Pulumi CLI** installed and configured
+   ```bash
+   # Install Pulumi CLI
+   curl -fsSL https://get.pulumi.com | sh
+   
+   # Login to Pulumi
+   pulumi login
+   ```
+
+### Usage
+
+```bash
+# List all stacks
+./scripts/manage_access.py list
+
+# Check if your current IP has access to all stacks
+./scripts/manage_access.py check
+
+# Update a security group to allow access from your current IP
+./scripts/manage_access.py update dev/infrautilx-example
+```
+
+See the [scripts README](./scripts/README.md) for more details and troubleshooting information.
+
 ## Usage
 
 ### Basic Component Usage
@@ -88,6 +121,7 @@ This blueprint provides a production-ready pattern for:
 - Attaching and automatically initializing an EBS volume for additional storage
 - Configuring security groups using your local machine's IP address
 - Automated key pair management in the correct region
+- Enhanced SSH connectivity testing and troubleshooting
 
 To use this blueprint:
 
@@ -95,19 +129,67 @@ To use this blueprint:
 # Navigate to the blueprint directory
 cd blueprints/ec2_with_ebs
 
-# Deploy with a specific region (optional, defaults to us-west-2)
+# Deploy (will create .env file on first run)
+./deploy.sh
+
+# Deploy with a specific region (overrides .env setting)
 ./deploy.sh --region us-east-1
+
+# Test SSH connectivity manually
+./test_ssh.sh
+
+# Destroy resources when done
+./destroy.sh
 ```
 
 Features of the EC2 with EBS blueprint:
+- Interactive configuration with environment variable management
+- AWS SSO support for credential management
 - Automatically creates a VPC with proper internet gateway and route table configuration
 - Associates the subnet with the route table to ensure instances have internet access
-- Detects your local IP address and configures security group rules to allow SSH access only from your location
+- Detects your local IP address and configures security group rules for SSH access
 - Automatically formats and mounts the EBS volume on instance startup
 - Configures the EBS volume to persist across instance reboots via /etc/fstab
 - Properly manages key pairs in the selected AWS region
+- Comprehensive SSH connectivity testing with troubleshooting guidance
+- Detailed logging for easier debugging
 
 See the [blueprints directory](./blueprints/) for more detailed information.
+
+## Scripts
+
+InfraUtilX includes several utility scripts to help manage your infrastructure:
+
+### Stack Management Scripts
+
+- **manage_access.py**: Manages access to your deployed infrastructure when your IP changes
+  ```bash
+  ./scripts/manage_access.py list    # List all stacks
+  ./scripts/manage_access.py check   # Check if your IP has access
+  ./scripts/manage_access.py update  # Update security group with your IP
+  ```
+
+### Blueprint Scripts
+
+- **deploy.sh**: Interactive deployment script for blueprints
+  ```bash
+  ./blueprints/ec2_with_ebs/deploy.sh              # Deploy with interactive setup
+  ./blueprints/ec2_with_ebs/deploy.sh --sso-login  # Deploy with AWS SSO login
+  ./blueprints/ec2_with_ebs/deploy.sh --destroy    # Destroy resources
+  ```
+
+- **test_ssh.sh**: Tests SSH connectivity to deployed instances
+  ```bash
+  ./blueprints/ec2_with_ebs/test_ssh.sh            # Test SSH connectivity
+  ./blueprints/ec2_with_ebs/test_ssh.sh --verbose  # Test with verbose output
+  ```
+
+- **destroy.sh**: Dedicated script for destroying resources
+  ```bash
+  ./blueprints/ec2_with_ebs/destroy.sh             # Destroy resources
+  ```
+
+All scripts include detailed help information accessible via the `--help` flag.
 
 ## Project Structure
 
@@ -117,9 +199,11 @@ InfraUtilX/
 │   ├── ec2/               # EC2 instance components
 │   ├── networking/        # Networking components
 │   ├── storage/           # Storage components
-│   └── utils/             # Utility functions
+│   └── utils/             # Utility functions and stack management
 ├── blueprints/             # Deployment blueprints
 │   └── ec2_with_ebs/      # EC2 with EBS blueprint
+├── scripts/                # Utility scripts
+│   └── manage_access.py   # Script for managing access to stacks
 ├── tests/                  # Test files
 │   ├── ec2/               # EC2 tests
 │   ├── networking/        # Networking tests

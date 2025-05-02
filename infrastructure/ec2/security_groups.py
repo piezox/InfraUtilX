@@ -1,6 +1,7 @@
 import pulumi
 import pulumi_aws as aws
-from typing import List, Dict, Optional, Union, Any
+import boto3
+from typing import List, Dict, Optional, Union, Any, Tuple
 
 class IngressRule:
     def __init__(

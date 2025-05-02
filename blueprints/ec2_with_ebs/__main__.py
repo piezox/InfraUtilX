@@ -30,6 +30,8 @@ CONFIG = {
     "key_name": "demo-key",  # Must exist in AWS account
     "ebs_size": 20,  # GB
     "ebs_device_name": "/dev/sdf",
+    # Use a known working AMI ID
+    "ami_id": "ami-075686beab831bb7f",  # Known working Ubuntu AMI
 }
 
 # Get default tags
@@ -72,15 +74,16 @@ if not local_ip:
 
 local_cidr = format_cidr_from_ip(local_ip)
 pulumi.export("authorized_ip", local_cidr)
+print(f"Detected local IP address: {local_ip} (CIDR: {local_cidr})")
 
-# Create a security group with SSH access from local IP
+# Create a security group with SSH access from local IP and a wider range for troubleshooting
 ingress_rules = [
     IngressRule(
         protocol="tcp",
         from_port=22,
         to_port=22,
-        cidr_blocks=[local_cidr],
-        description="SSH access from local machine"
+        cidr_blocks=[local_cidr, "0.0.0.0/0"],  # Allow SSH from anywhere for initial troubleshooting
+        description="SSH access (includes wider access for troubleshooting)"
     ),
     IngressRule(
         protocol="tcp",
@@ -95,6 +98,14 @@ ingress_rules = [
         to_port=443,
         cidr_blocks=["0.0.0.0/0"],
         description="HTTPS access"
+    ),
+    # Add ICMP for ping tests
+    IngressRule(
+        protocol="icmp",
+        from_port=-1,
+        to_port=-1,
+        cidr_blocks=["0.0.0.0/0"],
+        description="ICMP (ping) access"
     )
 ]
 
@@ -106,8 +117,9 @@ security_group = create_security_group(
     tags=tags
 )
 
-# Create an EC2 instance
-ami_id = "ami-0f9de6e2d2f067fca"  # Specific AMI instead of dynamic lookup
+# Create an EC2 instance with enhanced user data for SSH troubleshooting
+# Use the specified AMI ID instead of the dynamic lookup
+ami_id = CONFIG["ami_id"]
 instance = create_instance(
     name=f"{CONFIG['project']}-instance",
     instance_type=CONFIG["instance_type"],
@@ -118,18 +130,47 @@ instance = create_instance(
     tags=merge_tags(tags, {"Name": f"{CONFIG['project']}-instance"}),
     ami_id=ami_id,
     user_data=f"""#!/bin/bash
-echo "Hello from InfraUtilX Example!"
+# Create a log file for troubleshooting
+LOGFILE="/var/log/infrautilx-startup.log"
+exec > >(tee -a $LOGFILE) 2>&1
+
+echo "===== InfraUtilX Startup Script - $(date) ====="
+echo "Starting instance configuration..."
+
+# Ensure SSH is properly configured and running
+echo "Configuring SSH service..."
+sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+sudo systemctl restart ssh
+sudo systemctl status ssh
+
+# Check SSH service status
+echo "SSH service status:"
+sudo systemctl status ssh | grep Active
 
 # Update packages
+echo "Updating packages..."
 sudo apt-get update -y
 sudo apt-get install -y nginx
 sudo systemctl start nginx
 
+# Check network configuration
+echo "Network configuration:"
+ip addr show
+echo "Default route:"
+ip route show
+echo "DNS configuration:"
+cat /etc/resolv.conf
+
 # Wait for devices to settle
+echo "Waiting for devices to settle..."
 sleep 10
 
 # Get the EBS device name (in case of device name mapping differences)
 DEVICE_NAME="{CONFIG['ebs_device_name']}"
+echo "Looking for EBS volume at $DEVICE_NAME..."
+lsblk
+
 ACTUAL_DEVICE=$(lsblk | grep -v loop | grep disk | grep -v xvda | awk '{{print $1}}' | head -1)
 if [ -z "$ACTUAL_DEVICE" ]; then
     echo "Could not find the EBS volume. Using default: $DEVICE_NAME"
@@ -142,6 +183,7 @@ ACTUAL_DEVICE="/dev/$ACTUAL_DEVICE"
 # Create mount point
 MOUNT_POINT="/data"
 sudo mkdir -p $MOUNT_POINT
+echo "Created mount point at $MOUNT_POINT"
 
 # Always format the volume - we know it's a new volume as part of our deployment
 echo "Formatting the EBS volume as ext4..."
@@ -160,10 +202,38 @@ fi
 
 # Set proper permissions
 sudo chown -R ubuntu:ubuntu $MOUNT_POINT
+echo "Set permissions on $MOUNT_POINT"
 
 # Create a file to verify setup completed
 sudo touch /tmp/startup_complete
 echo "EBS volume setup completed successfully" > $MOUNT_POINT/setup_complete.txt
+
+# Create a welcome page with instance info
+cat > /var/www/html/index.html << EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>InfraUtilX Instance</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }}
+        h1 {{ color: #333; }}
+        .info {{ background-color: #f4f4f4; padding: 20px; border-radius: 5px; }}
+    </style>
+</head>
+<body>
+    <h1>InfraUtilX Instance</h1>
+    <div class="info">
+        <p><strong>Instance ID:</strong> $(curl -s http://169.254.169.254/latest/meta-data/instance-id)</p>
+        <p><strong>Instance Type:</strong> $(curl -s http://169.254.169.254/latest/meta-data/instance-type)</p>
+        <p><strong>Availability Zone:</strong> $(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)</p>
+        <p><strong>Public IP:</strong> $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)</p>
+        <p><strong>Setup Completed:</strong> $(date)</p>
+    </div>
+</body>
+</html>
+EOF
+
+echo "===== InfraUtilX Startup Script Completed - $(date) ====="
 """
 )
 
@@ -191,4 +261,4 @@ pulumi.export("instance_id", instance.id)
 pulumi.export("public_ip", instance.public_ip)
 pulumi.export("ebs_volume_id", ebs_volume.id)
 pulumi.export("key_name", key_name)
-pulumi.export("key_path", key_path) 
+pulumi.export("key_path", key_path)

@@ -1,0 +1,6 @@
+name: vscode-server-blueprint
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: A blueprint for creating a VS Code Server instance with persistent storage

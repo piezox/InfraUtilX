@@ -134,6 +134,9 @@ instance = create_instance(
 LOGFILE="/var/log/infrautilx-startup.log"
 exec > >(tee -a $LOGFILE) 2>&1
 
+# Ensure HOME environment variable is set
+export HOME="/home/ubuntu"
+
 echo "===== InfraUtilX Startup Script - $(date) ====="
 echo "Starting instance configuration..."
 
@@ -171,7 +174,8 @@ DEVICE_NAME="{CONFIG['ebs_device_name']}"
 echo "Looking for EBS volume at $DEVICE_NAME..."
 lsblk
 
-ACTUAL_DEVICE=$(lsblk | grep -v loop | grep disk | grep -v xvda | awk '{{print $1}}' | head -1)
+# Find EBS volume - improved method that avoids the root volume
+ACTUAL_DEVICE=$(lsblk | grep -v loop | grep disk | grep -v nvme0n1 | awk '{{print $1}}' | head -1)
 if [ -z "$ACTUAL_DEVICE" ]; then
     echo "Could not find the EBS volume. Using default: $DEVICE_NAME"
     ACTUAL_DEVICE="xvdf"
@@ -185,19 +189,29 @@ MOUNT_POINT="/data"
 sudo mkdir -p $MOUNT_POINT
 echo "Created mount point at $MOUNT_POINT"
 
-# Always format the volume - we know it's a new volume as part of our deployment
-echo "Formatting the EBS volume as ext4..."
-sudo mkfs -t ext4 $ACTUAL_DEVICE
-
-# Mount the volume
-echo "Mounting the EBS volume to $MOUNT_POINT"
-sudo mount $ACTUAL_DEVICE $MOUNT_POINT
-
-# Update fstab to mount on reboot
-EBS_UUID=$(sudo blkid -s UUID -o value $ACTUAL_DEVICE)
-if ! grep -q "$EBS_UUID" /etc/fstab; then
-    echo "Adding entry to /etc/fstab for persistent mounting"
-    echo "UUID=$EBS_UUID $MOUNT_POINT ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+# Check if the device is already mounted or formatted
+if mount | grep -q "$ACTUAL_DEVICE"; then
+    echo "Device $ACTUAL_DEVICE is already mounted. Skipping formatting."
+else
+    # Check if the device has a filesystem
+    if sudo file -s $ACTUAL_DEVICE | grep -q "data"; then
+        echo "Device $ACTUAL_DEVICE already has a filesystem. Skipping formatting."
+    else
+        # Format the volume
+        echo "Formatting the EBS volume as ext4..."
+        sudo mkfs -t ext4 $ACTUAL_DEVICE
+    fi
+    
+    # Mount the volume
+    echo "Mounting the EBS volume to $MOUNT_POINT"
+    sudo mount $ACTUAL_DEVICE $MOUNT_POINT
+    
+    # Update fstab to mount on reboot
+    EBS_UUID=$(sudo blkid -s UUID -o value $ACTUAL_DEVICE)
+    if ! grep -q "$EBS_UUID" /etc/fstab; then
+        echo "Adding entry to /etc/fstab for persistent mounting"
+        echo "UUID=$EBS_UUID $MOUNT_POINT ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+    fi
 fi
 
 # Set proper permissions

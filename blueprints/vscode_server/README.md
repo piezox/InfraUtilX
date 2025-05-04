@@ -121,3 +121,20 @@ To customize this blueprint:
 8. Outputs the URL and login credentials
 
 By extending the EC2 with EBS blueprint, this blueprint ensures future improvements to the base blueprint are automatically inherited.
+
+## Known Issues and Fixes
+
+### EBS Volume Mounting
+The script now includes enhanced error handling for EBS volume mounting:
+- Correctly detects the actual device name, avoiding confusion with the root volume
+- Checks if the device is already mounted before attempting to format
+- Verifies if the device already has a filesystem before formatting
+- Creates proper mount point directories with appropriate permissions
+
+### Code-Server Installation
+The installation script has been improved to:
+- Ensure the HOME environment variable is always set correctly
+- Verify the successful installation of code-server
+- Include a fallback installation method through apt if the curl method fails
+- Add explicit environment variables in the systemd service
+- Provide better error handling and logging

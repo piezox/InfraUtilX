@@ -89,6 +89,114 @@ Before using the access management utilities, make sure you have:
 
 See the [scripts README](./scripts/README.md) for more details and troubleshooting information.
 
+## Managing AWS Profiles
+
+InfraUtilX includes a powerful AWS profile management utility that helps you work with multiple AWS profiles, accounts, and credentials. This is particularly useful when working across multiple AWS accounts or roles.
+
+### AWS Profile Management Features
+
+- **Profile Discovery**: Automatically detects all AWS profiles from your `~/.aws/config` and `~/.aws/credentials` files
+- **Account Identification**: Shows AWS account numbers for each profile to easily identify which account you're working with
+- **Authentication Method**: Identifies how each profile authenticates (API keys, SSO, assumed roles)
+- **Identity Information**: Shows IAM user or role names to understand permissions context
+- **Shell Integration**: Provides helper functions for your shell for easy profile switching and management
+- **Credential Validation**: Verifies credentials are valid for each profile
+- **SSO Support**: Handles AWS SSO refreshing for SSO-based profiles
+
+### Prerequisites
+
+Before using the AWS profile management utility, make sure you have:
+
+1. **AWS CLI** installed and configured with profiles
+2. **Pulumi CLI** installed (for credential validation)
+
+### Command-Line Usage
+
+```bash
+# List all profiles (with basic information)
+./scripts/manage_profiles.py list
+
+# List all profiles with account IDs and identity info
+./scripts/manage_profiles.py list --all-accounts
+
+# Show current active profile
+./scripts/manage_profiles.py current
+
+# Switch to a different profile
+./scripts/manage_profiles.py switch profile_name
+
+# Validate credentials for a profile
+./scripts/manage_profiles.py validate --profile profile_name
+
+# Refresh SSO credentials for a profile
+./scripts/manage_profiles.py refresh-sso profile_name
+
+# Get shell helper functions
+./scripts/manage_profiles.py shell-helpers
+```
+
+### Shell Integration
+
+For easier day-to-day use, add the shell helper function to your `.bashrc` or `.zshrc`:
+
+```bash
+# Save the helper functions
+./scripts/manage_profiles.py shell-helpers > ~/.aws_profile_helpers.sh
+
+# Add it to your shell config
+echo 'source ~/.aws_profile_helpers.sh' >> ~/.zshrc
+
+# Source it in your current shell
+source ~/.aws_profile_helpers.sh
+```
+
+This adds a unified `awsp` command for profile management:
+
+```bash
+# Show help
+awsp
+
+# List profiles (without account IDs)
+awsp ls
+
+# List profiles with account IDs and identity info
+awsp ls -a
+
+# Show current profile
+awsp current
+
+# Switch to a profile
+awsp switch profile_name
+# or
+awsp use profile_name
+
+# Validate credentials
+awsp validate [profile_name]
+
+# Refresh SSO credentials
+awsp sso profile_name
+```
+
+### Example Output
+
+```
+AWS Profiles:
+  default - us-east-1 - Account: 123456789012 [api_key, admin] (DEFAULT)
+→ dev-account - us-west-2 - Account: 234567890123 [sso, AdministratorAccess] (ACTIVE, SSO)
+  prod-account - us-east-1 - Account: 345678901234 [role, PowerUserAccess]
+
+Active profile: dev-account
+```
+
+The output shows:
+- Profile name and region
+- AWS account ID
+- Authentication method and identity (user/role)
+- Status indicators (ACTIVE, DEFAULT, SSO)
+- Current active profile (indicated by →)
+
+See the [scripts README](./scripts/README.md) for more details and troubleshooting information.
+
 ## Usage
 
 ### Basic Component Usage
@@ -167,6 +275,18 @@ InfraUtilX includes several utility scripts to help manage your infrastructure:
   ./scripts/manage_access.py list    # List all stacks
   ./scripts/manage_access.py check   # Check if your IP has access
   ./scripts/manage_access.py update  # Update security group with your IP
+  ```
+
+### AWS Profile Management
+
+- **manage_profiles.py**: Manages AWS profiles and credentials with Pulumi integration
+  ```bash
+  ./scripts/manage_profiles.py list            # List all profiles
+  ./scripts/manage_profiles.py current         # Show current profile
+  ./scripts/manage_profiles.py switch PROFILE  # Switch to profile
+  ./scripts/manage_profiles.py validate        # Validate credentials
+  ./scripts/manage_profiles.py refresh-sso PROFILE  # Refresh SSO credentials
+  ./scripts/manage_profiles.py shell-helpers   # Get shell helper functions
   ```
 
 ### Blueprint Scripts

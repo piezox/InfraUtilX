@@ -7,6 +7,7 @@ This directory contains deployment blueprints - ready-to-use architectural patte
 | Blueprint | Description |
 |-----------|-------------|
 | [EC2 with EBS](./ec2_with_ebs/) | Deploy an EC2 instance with an attached EBS volume and security group configured with your local IP address |
+| [VS Code Server](./vscode_server/) | Deploy a browser-based VS Code development environment with persistent storage and secure access |
 
 ## Using the Blueprints
 
@@ -29,6 +30,41 @@ The deployment script will:
 - Install both InfraUtilX and the blueprint-specific dependencies
 - Initialize a Pulumi stack
 - Deploy the infrastructure
+
+### Using AWS Profiles with Blueprints
+
+To deploy a blueprint using a specific AWS profile:
+
+1. List available AWS profiles to choose from:
+   ```bash
+   ../scripts/manage_profiles.py list --all-accounts
+   ```
+
+2. Set the desired AWS profile:
+   ```bash
+   export AWS_PROFILE=profile_name
+   ```
+   
+   Or using the shell helper:
+   ```bash
+   source ~/.aws_profile_helpers.sh
+   awsp switch profile_name
+   ```
+
+3. Deploy the blueprint:
+   ```bash
+   ./deploy.sh
+   ```
+
+## Blueprint Categories
+
+### Development Environments
+
+- **[VS Code Server](./vscode_server/)**: A cloud-based VS Code environment with persistent storage, accessible from any browser. Perfect for remote development or working across multiple devices.
+
+### Compute Infrastructure
+
+- **[EC2 with EBS](./ec2_with_ebs/)**: A fully configured EC2 instance with attached persistent storage, proper networking, and security settings.
 
 ## Creating New Blueprints
 

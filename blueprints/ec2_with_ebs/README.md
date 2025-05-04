@@ -161,6 +161,18 @@ If you're having trouble connecting to the instance via SSH, here are some commo
 - **Issue**: Hard to diagnose what's happening on the instance
 - **Solution**: The user data script now creates detailed logs at `/var/log/infrautilx-startup.log`
 
+## EBS Volume Enhancements
+
+The blueprint now includes improvements to the EBS volume mounting process:
+
+- **Robust device detection**: Better identification of the correct EBS volume, avoiding confusion with the root volume
+- **Safer mounting**: Checks if a device is already mounted before attempting to format
+- **Filesystem verification**: Detects if the device already has a filesystem before formatting
+- **Error handling**: Gracefully handles common issues that can occur during the mounting process
+- **Environment variables**: Ensures environment variables like HOME are properly set
+
+These improvements make the blueprint more reliable in various scenarios, including when used as a base for other blueprints.
+
 ## How It Works
 
 1. The script asks for configuration values and creates a `.env` file
